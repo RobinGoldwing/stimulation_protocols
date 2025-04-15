@@ -1,0 +1,73 @@
+/__pycache__
+emotibit_data/*.csv
+emotibit_data/*.json
+emotibit_data/LSL_recording_timestamps/06032023/expOO1/*.xdf
+emotibit_data/LSL_recording_timestamps/*.xdf
+/emotibit_data/LSL_recording_timestamps/06032023/exp001/
+/emotibit_data
+/pupil_labs_data
+/OBJECTS_not_used
+/OBJECTS_all/
+# /OBJECTS/
+
+# Archivos de Datos
+*.xdf
+*.csv
+
+# Entornos virtuales
+.venv/
+env/
+venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.swp
+*~
+
+# Configs y caché
+*.DS_Store
+.cache/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Modelos entrenados o datos pesados
+*.h5
+*.pth
+*.pt
+*.joblib
+*.pkl
+*.npz
+
+# Salida de experimentos o figuras generadas
+outputs/
+figures/
+results/
+plots/
+runs/
+
+# Datos confidenciales o locales
+.env
+*.secret
+*.key
+
+# Carpetas típicas de proyectos científicos
+__results__/
+__data__/
+__models__/
