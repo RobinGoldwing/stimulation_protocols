@@ -1,0 +1,18 @@
+monitor:
+  resolution: [1024, 768]           # Screen resolution in pixels
+  distance_cm: 60                   # Distance from subject to screen (cm)
+  width_cm: 50                      # Physical width of the screen (cm)
+  refresh_rate_hz: 60.01           # Monitor refresh rate
+
+display:
+  color_rgb255: [110, 110, 110]     # Background color in RGB (0–255)
+  fullscreen: true                  # Launch test in fullscreen mode
+  screen_index: 0                  # Index of the display to use
+  use_gui: true                    # Whether to allow window GUI borders
+  color_space: "rgb255"            # Color space for PsychoPy
+  flip_interval_override: null     # Optional override of flip interval in seconds
+
+sync:
+  method: "none"                   # none | ttl | lsl
+  ttl_port: "/dev/ttyUSB0"         # If using TTL
+  lsl_stream_name: "luminance"     # If using LSL

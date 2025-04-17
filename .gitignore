@@ -1,3 +1,4 @@
+# OLD Gitignore file
 /__pycache__
 emotibit_data/*.csv
 emotibit_data/*.json
