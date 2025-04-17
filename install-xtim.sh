@@ -4,13 +4,13 @@
 # XTIM – Installation Script for Linux/macOS
 # =============================================================================
 # This script verifies the presence of Conda and initializes the XTIM
-# experimental environment from ./config/conda-env/config-env.yml.
+# experimental environment from ./config/conda-env/xtim-config-env.yml.
 #
 # Part of the XSCAPE Project
 # Developed by Arturo-José Valiño and Rubén Álvarez-Mosquera
 # =============================================================================
 
-ENV_FILE="./config/conda-env/config-env.yml"
+ENV_FILE="./config/conda-env/xtim-config-env.yml"
 ENV_NAME="xtim-env"
 
 echo "🔍 Checking system for Conda installation..."

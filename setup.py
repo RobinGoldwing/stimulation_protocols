@@ -23,8 +23,8 @@ setup(
     name="xtim",
     version="0.1.0",
     description="Scientific experiment manager for EyeTracking, EEG, Emobit and stimuli",
-    author="Tu Nombre o Grupo",
-    author_email="tucorreo@ejemplo.com",
+    author="XSCAPE-MaterialMinds Proyect",
+    author_email="arturo-jose.valino@incipit.csic.es",
     packages=find_packages(),  # Encuentra todos los submódulos automáticamente
     include_package_data=True,
     install_requires=[

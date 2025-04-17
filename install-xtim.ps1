@@ -3,14 +3,14 @@
 XTIM – Installation Script for Windows (PowerShell)
 ===============================================================================
 This script verifies the presence of Conda and initializes the XTIM
-experimental environment from ./config/conda-env/config-env.yml.
+experimental environment from ./config/conda-env/xtim-config-env.yml.
 
 Part of the XSCAPE Project
 Developed by Arturo-José Valiño and Rubén Álvarez-Mosquera
 ===============================================================================
 #>
 
-$envFile = ".\config\conda-env\config-env.yml"
+$envFile = ".\config\conda-env\xtim-config-env.yml"
 $envName = "xtim-env"
 
 Write-Host "🔍 Checking system for Conda installation..."

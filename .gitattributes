@@ -1,0 +1,29 @@
+# Automatically normalize all text files to use LF
+* text=auto
+
+# Force LF line endings for common text-based file types
+*.py    text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.sh    text eol=lf
+*.txt   text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.ts    text eol=lf
+
+# Allow PowerShell scripts to keep CRLF endings (Windows-native)
+*.ps1   text eol=crlf
+
+# Prevent line-ending normalization for binary files
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.exe   binary
+*.dll   binary

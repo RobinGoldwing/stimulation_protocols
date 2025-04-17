@@ -1,0 +1,10 @@
+{
+  "experiment": "example_experiment",
+  "author_name": "Your Name",
+  "description": "Short description of the experiment",
+  "version": "0.1.0",
+  "use_emotibit": "no",
+  "use_pupil_labs": "yes",
+  "sampling_rate": "60",
+  "duration_minutes": "5"
+}

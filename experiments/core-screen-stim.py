@@ -1,3 +1,22 @@
+# =============================================================================
+# XTIM – Experimental Toolkit for Multimodal Neuroscience
+# =============================================================================
+# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
+#
+# Developed by:
+#   - Arturo-José Valiño
+#   - Rubén Álvarez-Mosquera
+#
+# This software is designed to facilitate the creation, execution, and analysis
+# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
+# It integrates with hardware and software tools such as Pupil Labs, Emobit,
+# and MilliKey MH5, providing a unified command-line interface and interactive
+# menu system for experiment management.
+#
+# For more information about the XSCAPE project, please refer to the project's
+# documentation or contact the developers.
+# =============================================================================
+
 """Code for presentation of stimulus fot the Xscape proyect.
 The code automatically executes the stimulation protocol for a 
 pupil labs experiment. It automatically conects and starts the recording.
