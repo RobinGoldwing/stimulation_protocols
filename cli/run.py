@@ -40,6 +40,51 @@ def list_experiments():
     for key in EXPERIMENT_SCRIPTS:
         typer.echo(f"  - {key}")
 
+@app.command("check")
+def check_environment(
+    name: str = typer.Argument(..., help="Name of the experiment to validate (e.g. core-screen)"),
+    exp: str = typer.Option(..., "--exp", "-e", help="Experiment name inside LABORATORY or ARCHIVE")
+):
+    """
+    Validate if the experiment environment is ready to launch.
+    """
+    if name not in EXPERIMENT_SCRIPTS:
+        typer.echo(f"[red]❌ Unknown experiment: {name}[/red]")
+        raise typer.Exit()
+
+    exp_path = resolve_experiment_path(exp)
+    script = EXPERIMENT_PATH / EXPERIMENT_SCRIPTS[name]
+
+    checks = [script.exists(), exp_path.exists()]
+    if not checks[0]:
+        typer.echo(f"[red]❌ Script missing: {script}[/red]")
+    if not checks[1]:
+        typer.echo(f"[red]❌ Experiment folder missing: {exp_path}[/red]")
+
+    # Specific checks
+    if "screen" in name and not (exp_path / "OBJECTS").exists():
+        typer.echo(f"[red]❌ Missing OBJECTS folder in: {exp_path}[/red]")
+
+    if "asset" in name and not (exp_path / "assets.txt").exists():
+        typer.echo(f"[red]❌ Missing assets.txt in: {exp_path}[/red]")
+
+    if "core" in name:
+        try:
+            import zmq
+            import requests
+        except ImportError:
+            typer.echo("[red]❌ Required libraries for Core (zmq, requests) not found.[/red]")
+
+    if "neo" in name:
+        try:
+            from pupil_labs.realtime_api.simple import discover_one_device
+            discover_one_device()
+        except:
+            typer.echo("[red]❌ NEO device not detected or library missing.[/red]")
+
+    if all(checks):
+        typer.echo(f"[green]✅ Environment ready for '{name}' in '{exp}'[/green]")
+
 @app.command("start")
 def start(
     name: str = typer.Argument(..., help="Name of the experiment to run (e.g. core-screen)"),
@@ -58,7 +103,6 @@ def start(
         raise typer.Exit()
 
     output_path = path if path else resolve_experiment_path(exp)
-
     script = EXPERIMENT_PATH / EXPERIMENT_SCRIPTS[name]
     if not script.exists():
         typer.echo(f"[red]❌ Script not found: {script}[/red]")

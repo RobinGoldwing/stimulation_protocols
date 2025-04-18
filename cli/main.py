@@ -32,6 +32,8 @@ def lazy_delete(): from cli import delete; return delete.app
 def lazy_export(): from cli import export; return export.app
 def lazy_archive(): from cli import archive; return archive.app
 def lazy_test(): from cli import test; return test.app
+def lazy_assets(): from cli import assets; return assets.app
+
 
 
 # Register subcommands using lazy loaders
@@ -48,6 +50,8 @@ app.add_typer(lazy_delete(), name="delete", help="Delete experiments from LABORA
 app.add_typer(lazy_export(), name="export", help="Export experiments as compressed archives")
 app.add_typer(lazy_archive(), name="archive", help="Archive experiments into the ARCHIVE folder")
 app.add_typer(lazy_test(), name="test", help="Run integrated system tests")
+app.add_typer(lazy_assets(), name="assets", help="Manage and generate assets.txt files for experiments")
+
 
 if __name__ == "__main__":
     app()

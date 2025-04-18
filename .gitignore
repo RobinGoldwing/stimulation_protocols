@@ -11,6 +11,9 @@ emotibit_data/LSL_recording_timestamps/*.xdf
 /OBJECTS_all/
 # /OBJECTS/
 
+# .Gitignore
+# .gitattributes
+
 # Archivos de Datos
 *.xdf
 *.csv

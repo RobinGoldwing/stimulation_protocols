@@ -1,164 +1,107 @@
-# =============================================================================
-# XTIM – Experimental Toolkit for Multimodal Neuroscience
-# =============================================================================
-# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
-#
-# Developed by:
-#   - Arturo-José Valiño
-#   - Rubén Álvarez-Mosquera
-#
-# This software is designed to facilitate the creation, execution, and analysis
-# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
-# It integrates with hardware and software tools such as Pupil Labs, Emobit,
-# and MilliKey MH5, providing a unified command-line interface and interactive
-# menu system for experiment management.
-#
-# For more information about the XSCAPE project, please refer to the project's
-# documentation or contact the developers.
-# =============================================================================
+# experiments/neo-asset-stim.py
 
+"""
+XTIM NEO-Asset Stimulation Protocol
+Manual visual stimulation with Pupil Labs NEO and LSL.
+"""
 
-
-import sys
-sys.path.append('../../')
-import os
-import keyboard
-from time import sleep
-from psychopy import core, visual, event
+import argparse
 from pathlib import Path
 import random
-import commons as cm
-import argparse
-import logging
-from pyplr.pupil import PupilCore
+from time import sleep
 from pylsl import StreamInfo, StreamOutlet
-from pupil_labs.realtime_api.simple import Device
+import keyboard
+from experiments import commons as cm
 from pupil_labs.realtime_api.simple import discover_one_device
 
+# ─────────────────────────────────────────────
+# Argumentos CLI
+# ─────────────────────────────────────────────
 
-def main():
-    #Experiment parameters
-    stimulus_duration=10    #in seconds
+parser = argparse.ArgumentParser(description="Run NEO-Asset stimulation protocol.")
+parser.add_argument("path", type=str, help="Target experiment folder (LABORATORY/<name>)")
+args = parser.parse_args()
 
-    #Add arguments to indicate where stimulation images will be saved.
-    parser=argparse.ArgumentParser(
-        prog='Stimulation Protocol',
-        description="""Stimulation protocol for XSCAPE proyect. The program runs an 
-        randomised stimulation protocol and then saves the images in the provided Path
-        in the comand line.""" ,
-        epilog="""Rember to enter the path. To execute the program type in the console: 
-        python stimulation.py --path <full path for the saved images>""",
-        add_help=True,
-    )
+target_dir = Path(args.path)
+if not target_dir.exists():
+    raise SystemExit("❌ Target directory does not exist.")
+if any(target_dir.iterdir()):
+    raise SystemExit("❌ Target directory is not empty.")
+# ─────────────────────────────────────────────
+# Parámetros
+# ─────────────────────────────────────────────
 
-    parser.add_argument("path")
-    args=parser.parse_args()
-    target_dir = Path(args.path)
+stimulus_duration = 10  # seconds
 
-    if not target_dir.exists():
-        raise SystemError("The target directory doesn't exist")
-    if len(os.listdir(Path(target_dir)))>0:
-        raise SystemError('Target directory for saved images is not empty')
-  
-    # Set up LabStreamingLayer stream.
-    info = StreamInfo(name='DataSyncMarker', type='Tags', channel_count=1,
-                      channel_format='string', source_id='12345')
-    outlet = StreamOutlet(info)  # Broadcast the stream.
-    
-    # Set up Neon glases
-    device = discover_one_device()
+assets_file = target_dir / "assets.txt"
+if not assets_file.exists():
+    raise SystemExit(f"❌ File not found: {assets_file}")
 
-    print(f"Phone IP address: {device.phone_ip}")
-    print(f"Phone name: {device.phone_name}")
-    print(f"Battery level: {device.battery_level_percent}%")
-    print(f"Free storage: {device.memory_num_free_bytes / 1024**3:.1f} GB")
-    print(f"Serial number of connected glasses: {device.serial_number_glasses}")
+with open(assets_file, "r", encoding="utf-8") as f:
+    assets = [line.strip() for line in f if line.strip()]
 
-    # Get list of assets
-    assets=[]
-    with open('assets.txt') as file:
-        for line in file:
-            assets.append(line.replace('\n',''))
-    print(assets)
+random.shuffle(assets)
+print(f"📦 {len(assets)} assets loaded and shuffled.")
 
-    random.shuffle(assets)
-    print(assets)
-    print(assets[0])
+# ─────────────────────────────────────────────
+# Inicializar NEO y LSL
+# ─────────────────────────────────────────────
 
-    markers = {
-        'event': assets,
-        'test': ['test_event']
-    }
-    # Start recording
-    recording_id=device.recording_start()
-    print(f"Started recording with id {recording_id}")
-    
-    # Prepare and send annotations
-    # Start the annotations plugin
-   
-    start_input='start'
-    stim=True
-    while stim:
-        user_input=input('Type "start" to begin experiment, calibrate manually: \n')
-        if start_input==user_input:
-            print('Starting stimulation...')
-            sleep(2)
-            stim=False
-        elif start_input!=user_input:
-            print('Wrong input. Press control+c to skip program')
+print("🔌 Connecting to Pupil Labs NEO device...")
+device = discover_one_device()
+print("✅ Connected.")
+
+lsl_info = StreamInfo(name="XTIMMarkers", type="Markers", channel_count=1, channel_format="string", source_id="xtim_neo_asset")
+lsl_out = StreamOutlet(lsl_info)
+# ─────────────────────────────────────────────
+# Esperar inicio manual
+# ─────────────────────────────────────────────
+
+while True:
+    user_input = input('🧪 Type "start" to begin the experiment: ')
+    if user_input.lower() == "start":
+        print("▶ Starting stimulation...")
+        sleep(2)
+        break
+    else:
+        print("⚠️  Invalid input. Press CTRL+C to cancel.")
+# ─────────────────────────────────────────────
+# Estimulación manual por asset
+# ─────────────────────────────────────────────
+
+device.recording_start()
+lsl_out.push_sample(["START"])
+device.send_event("START")
+
+for i, asset in enumerate(assets):
+    print(f"[{i+1}/{len(assets)}] Present asset: {asset} and press ENTER to start stimulation.")
+
+    while True:
+        if keyboard.read_key() == "enter":
+            cm.tic()
+            print(f"📍 Recording asset: {asset}")
+            device.send_event(asset)
+            lsl_out.push_sample([asset])
+
+            sleep(stimulus_duration)
+
+            device.send_event("end_of_stimulation")
+            lsl_out.push_sample(["end_of_stimulation"])
+            cm.toc()
+            break
         else:
-            raise ValueError("You have to input a string") 
+            print("⌛ Waiting for ENTER... Press CTRL+C to cancel.")
 
-    for asset_number, asset in enumerate(assets):
-        print(asset_number)
-        print(asset)
+lsl_out.push_sample(["END"])
+device.send_event("END")
+sleep(1)
 
-        print(f'Place asset: {asset} and press enter when ready')
-        cal=True
-        cal_finish='ok'
-        while cal:
-            if keyboard.read_key()=='enter':
+recording_id = device.recording_stop_and_save()
+print(f"🛑 Recording saved. ID: {recording_id}")
+# ─────────────────────────────────────────────
+# Guardar orden de estimulación
+# ─────────────────────────────────────────────
 
-                cm.tic()
-                #Send annotations to LSL and pupil core
-                print(f'Recording asset data: {asset}..')
-
-                device.send_event(asset)
-                outlet.push_sample([asset])
-                sleep(stimulus_duration)
-
-                device.send_event('end_of_stimulation')
-                outlet.push_sample(['end_of_stimulation'])
-
-                print('stimulus time:')
-                cm.toc() 
-                break
-            else: 
-                print('You have pressed another key. Press control+c to skip program')
-    outlet.push_sample(['end_of_experiment'])    
-    device.send_event('end_of_experiment')
-
-    finish_input='f'
-    final_test=True
-    while final_test:
-        user_input=input('Do a Test before you end. Type "f" to finish the experiment": \n')
-        if finish_input==user_input:
-            print('Ending experiment...')
-            final_test=False
-        elif finish_input!=user_input:
-            print('Wrong input. Press control+c to skip program')
-        else:
-            raise ValueError("You have to input a string")   
-    # Stop recording
-    device.recording_stop_and_save()
-    
-    # Save assets order of appearance
-    print('Saving assets order list...')
-    cm.save_list_to_txt(assets,target_dir.joinpath('assets.txt'))
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print('Killed by user')
-        sys.exit(0)
+output_file = target_dir / "assets.txt"
+cm.save_list_to_txt(assets, output_file)
+print(f"✅ Assets saved to {output_file}")

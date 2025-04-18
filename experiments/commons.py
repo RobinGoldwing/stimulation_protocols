@@ -1,150 +1,132 @@
-# =============================================================================
-# XTIM – Experimental Toolkit for Multimodal Neuroscience
-# =============================================================================
-# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
-#
-# Developed by:
-#   - Arturo-José Valiño
-#   - Rubén Álvarez-Mosquera
-#
-# This software is designed to facilitate the creation, execution, and analysis
-# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
-# It integrates with hardware and software tools such as Pupil Labs, Emobit,
-# and MilliKey MH5, providing a unified command-line interface and interactive
-# menu system for experiment management.
-#
-# For more information about the XSCAPE project, please refer to the project's
-# documentation or contact the developers.
-# =============================================================================
-import msgpack as serializer
+# experiments/commons.py
+
+"""
+Commons Module for XTIM Experiments
+Provides utilities for Pupil Labs control, timing, stimulus logging, and frame rate validation.
+"""
+
 import time
-import socket
-import sys
-from pathlib import Path
+import os
+import zmq
+import requests
+import json
+from psychopy import visual, core
 
-def save_list_to_txt(my_list:list,list_path:Path):
-    """Function to save list to a .txt
+# ─────────────────────────────────────────────
+# PATH & FILE UTILITY
+# ─────────────────────────────────────────────
 
-    Args:
-        my_list (list): _description_
-        list_path (Path): _description_
+def save_list_to_txt(lista, filename):
+    """
+    Save a list of strings or values to a text file (one item per line).
+    """
+    with open(filename, 'w', encoding='utf-8') as f:
+        for item in lista:
+            f.write(f"{item}")
+
+
+# ─────────────────────────────────────────────
+# PUPIL LABS INTERFACE (ZMQ)
+# ─────────────────────────────────────────────
+
+def check_capture_exists():
+    """
+    Check if Pupil Capture is running by attempting to connect to its REST API.
+    Returns True if available, False otherwise.
     """
     try:
-        with open(list_path, mode='x') as f:
-            for item in my_list:
-                f.write(str(item) + '\n')
-    except FileExistsError:
-        with open(list_path, mode='w') as f:
-            for item in my_list:
-                f.write(str(item) + '\n')
-    else:
-        print('list saved')              
-        
-def check_capture_exists(ip_address, port):
-    """check pupil capture instance exists"""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        if not sock.connect_ex((ip_address, port)):
-            print("Found Pupil Capture")
-        else:
-            raise ConnectionError("Cannot find Pupil Capture, please start pupil capture")
-        
-def setup_pupil_remote_connection(ip_address, port):
-    """Creates a zmq-REQ socket and connects it to Pupil Capture or Service
-    to send and receive notifications.
+        r = requests.get("http://localhost:50020")
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
 
-    We also set up a PUB socket to send the annotations. This is necessary to write
-    messages to the IPC Backbone other than notifications
-
-    See https://docs.pupil-labs.com/developer/core/network-api/ for details.
+def setup_pupil_remote_connection():
     """
-    # zmq-REQ socket
-    ctx = zmq.Context.instance()
-    pupil_remote = ctx.socket(zmq.REQ)
-    pupil_remote.connect(f"tcp://{ip_address}:{port}")
-
-    # PUB socket
-    pupil_remote.send_string("PUB_PORT")
-    pub_port = pupil_remote.recv_string()
-    pub_socket = zmq.Socket(ctx, zmq.PUB)
-    pub_socket.connect("tcp://127.0.0.1:{}".format(pub_port))
-
-    return pupil_remote, pub_socket
-
-def request_pupil_time(pupil_remote):
-    """Uses an existing Pupil Core software connection to request the remote time.
-    Returns the current "pupil time" at the timepoint of reception.
-    See https://docs.pupil-labs.com/core/terminology/#pupil-time for more information
-    about "pupil time".
+    Initialize ZMQ connection to Pupil Remote plugin on port 50020.
+    Returns the socket object.
     """
-    pupil_remote.send_string("t")
-    pupil_time = pupil_remote.recv()
+    context = zmq.Context()
+    pupil_remote = context.socket(zmq.REQ)
+    pupil_remote.connect("tcp://127.0.0.1:50020")
+    return pupil_remote
+
+def request_pupil_time(pupil_socket):
+    """
+    Request the current time from Pupil Capture clock via ZMQ.
+    Returns a float timestamp.
+    """
+    pupil_socket.send_string("t")
+    pupil_time = pupil_socket.recv_string()
     return float(pupil_time)
 
-def notify(pupil_remote, notification):
-    """Sends ``notification`` to Pupil Remote"""
-    topic = "notify." + notification["subject"]
-    payload = serializer.dumps(notification, use_bin_type=True)
-    pupil_remote.send_string(topic, flags=zmq.SNDMORE)
-    pupil_remote.send(payload)
-    return pupil_remote.recv_string()
-
-def getActualFrameRate(frames=1000,monitor=1):
+def notify(pupil_socket, label, timestamp=None, duration=0.0, tags=[]):
     """
-    Measures the actual framerate of your monitor. It's not always as clean as
-    you'd think. Prints various useful information.
-        :frames: number of frames to do test on.
+    Send an annotation message to Pupil Labs with optional timestamp and tags.
     """
-    from psychopy import visual, core
+    payload = {
+        "topic": "annotation",
+        "label": label,
+        "duration": duration,
+        "timestamp": timestamp if timestamp is not None else time.time(),
+        "tags": tags
+    }
+    pupil_socket.send_string(f"notify.{json.dumps(payload)}")
+    pupil_socket.recv_string()
 
-    # Set stimuli up
-    durations = []
+def new_annotation(pupil_socket, label, tags=[]):
+    """
+    Create and send a new annotation with current timestamp.
+    """
+    ts = request_pupil_time(pupil_socket)
+    notify(pupil_socket, label, timestamp=ts, tags=tags)
+
+
+# ─────────────────────────────────────────────
+# FRAME RATE VALIDATION
+# ─────────────────────────────────────────────
+
+def getActualFrameRate(monitor=0):
+    """
+    Launch a PsychoPy window on the specified monitor and measure the actual frame rate.
+    """
+    win = visual.Window(fullscr=True, screen=monitor, monitor="testMonitor")
     clock = core.Clock()
-    win = visual.Window(color='pink',
-    screen=monitor)
+    frames = 120
+    durations = []
 
-    # Show a brief instruction / warning
-    visual.TextStim(win, text='Now wait and \ndon\'t do anything', color='black').draw()
-    win.flip()
-    core.wait(1.5)
-
-    # blank screen and synchronize clock to vertical blanks
-    win.flip()
-    clock.reset()
-
-    # Run the test!
-    for i in range(frames):
+    for _ in range(frames):
         win.flip()
-        durations += [clock.getTime()]
+        durations.append(clock.getTime())
         clock.reset()
 
     win.close()
+    core.quit()
 
-    # Print summary
-    import numpy as np
-    print('average frame duration was', round(np.average(durations) * 1000, 3), 'ms (SD', round(np.std(durations), 5), ') ms')
-    print('corresponding to a framerate of', round(1 / np.average(durations), 3), 'Hz')
-    print('60 frames on your monitor takes', round(np.average(durations) * 60 * 1000, 3), 'ms')
-    print('shortest duration was ', round(min(durations) * 1000, 3), 'ms and longest duration was ', round(max(durations) * 1000, 3), 'ms')
+    avg = sum(durations) / len(durations)
+    print(f"📊 Measured {frames} flips")
+    print(f"🕒 Avg frame duration: {avg:.4f} s ≈ {1.0 / avg:.2f} Hz")
 
 
-def TicTocGenerator():
-    # Generator that returns time differences
-    ti = 0           # initial time
-    tf = time.time() # final time
-    while True:
-        ti = tf
-        tf = time.time()
-        yield tf-ti # returns the time difference
+# ─────────────────────────────────────────────
+# TIMING FUNCTIONS
+# ─────────────────────────────────────────────
 
-TicToc = TicTocGenerator() # create an instance of the TicTocGen generator
+_tic_reference = {}
 
-# This will be the main function through which we define both tic() and toc()
-def toc(tempBool=True):
-    # Prints the time difference yielded by generator instance TicToc
-    tempTimeInterval = next(TicToc)
-    if tempBool:
-        print( "Elapsed time: %f seconds.\n" %tempTimeInterval )
+def tic(name="default"):
+    """
+    Start a named timer.
+    """
+    _tic_reference[name] = time.perf_counter()
 
-def tic():
-    # Records a time in TicToc, marks the beginning of a time interval
-    toc(False)
+def toc(name="default"):
+    """
+    Stop and report elapsed time for a named timer.
+    Returns the duration in seconds.
+    """
+    if name not in _tic_reference:
+        print(f"[TIMER ERROR] No tic() set for '{name}'")
+        return None
+    delta = time.perf_counter() - _tic_reference[name]
+    print(f"⏱️  {name} elapsed: {delta:.6f} seconds")
+    return delta
