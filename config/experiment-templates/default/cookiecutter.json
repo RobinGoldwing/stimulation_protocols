@@ -1,12 +1,50 @@
 {
   "experiment": "example_experiment",
+  "creation_date": "autogen",
+  "experiment_id": "autogen",
   "author_name": "Your Name",
+  "author_email": "you@example.com",
   "description": "Short description of the experiment",
   "version": "0.1.0",
-  "research_area": ["attention", "memory"],
-  "device_setup": ["pupil_core", "emotibit"],
-  "sampling_rate": "60",
-  "duration_minutes": "5",
-  "ethics_code": "EXP-2024-013",
-  "participant_type": "human-adult"
+  
+  "research_area": ["attention", "memory", "perception", "language", "motor control"],
+  "paradigm":       ["fixation", "rsvp", "stroop", "oddball", "free_view"],
+
+  "use_pupil_core": ["yes", "no"],
+  "use_pupil_neo":  ["no", "yes"],
+  "use_emotibit":   ["no", "yes"],
+  "use_eeg":        ["no", "yes"],
+  "use_millikey":   ["no", "yes"],
+  "use_lsl":        ["yes", "no"],
+
+  "sampling_rate":      "60",
+  "duration_minutes":   "5",
+  "segments":           "1",
+  "calibration":        ["yes", "no"],
+
+  "resolution_x":          "1024",
+  "resolution_y":          "768",
+  "monitor_distance_cm":   "60",
+  "monitor_width_cm":      "50",
+  "monitor_refresh_hz":    "60.01",
+
+  "bg_r":                 "110",
+  "bg_g":                 "110",
+  "bg_b":                 "110",
+  "fullscreen":           ["true", "false"],
+  "screen_index":         "0",
+  "use_gui":              ["true", "false"],
+  "color_space":          ["rgb255", "rgb"],
+  "flip_interval_override": "0.0",
+
+  "sync_method":       ["none", "ttl", "lsl"],
+  "ttl_port":          "/dev/ttyUSB0",
+  "lsl_stream_name":   "luminance",
+
+  "ethics_code":     "EXP-2025‑001",
+  "participant_type": ["human-adult", "human-child", "non-human"],
+  "language":        ["es", "en", "ga"]
 }
+
+
+

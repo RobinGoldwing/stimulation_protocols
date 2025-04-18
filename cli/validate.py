@@ -1,5 +1,24 @@
-
 # cli/validate.py
+
+
+# =============================================================================
+# XTIM – Experimental Toolkit for Multimodal Neuroscience
+# =============================================================================
+# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
+#
+# Developed by:
+#   - Arturo-José Valiño
+#   - Rubén Álvarez-Mosquera
+#
+# This software is designed to facilitate the creation, execution, and analysis
+# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
+# It integrates with hardware and software tools such as Pupil Labs, Emobit,
+# and MilliKey MH5, providing a unified command-line interface and interactive
+# menu system for experiment management.
+#
+# For more information about the XSCAPE project, please refer to the project's
+# documentation or contact the developers.
+# =============================================================================
 
 import typer
 from pathlib import Path
@@ -8,81 +27,102 @@ import yaml
 from rich import print
 from rich.panel import Panel
 from rich.table import Table
-from rich.prompt import Confirm
 
-app = typer.Typer(help="Validate the integrity and consistency of an experiment directory")
+app = typer.Typer(help="Validate experiment folders and related exports.")
 
-REQUIRED_TOML_KEYS = [
-    "experiment.name",
-    "experiment.created",
-    "experiment.version",
-    "hardware.use_pupil_core",
-    "recording.sampling_rate_hz"
-]
+LAB_PATH = Path(__file__).parent.parent / "LABORATORY"
+ARCHIVE_PATH = Path(__file__).parent.parent / "ARCHIVE"
+EXPORTS_PATH = Path(__file__).parent.parent / "EXPORTS"
 
-REQUIRED_PATHS = [
-    "data",
-    "log",
-    "scripts",
-    "config"
-]
+def validate_toml(toml_path: Path):
+    required = ["name", "uuid", "created"]
+    ok = True
 
-def load_toml_file(path: Path):
     try:
-        return toml.load(path)
+        meta = toml.load(toml_path)
+        exp = meta.get("experiment", {})
+        table = Table(title="experiment.toml")
+        table.add_column("Field", style="cyan")
+        table.add_column("Status", style="green")
+
+        for field in required:
+            if field in exp:
+                table.add_row(field, "✅")
+            else:
+                table.add_row(field, "[yellow]⚠ missing[/yellow]")
+                ok = False
+
+        print(table)
     except Exception as e:
-        print(f"[red]❌ Could not parse TOML file at {path}: {e}[/red]")
-        return None
+        print(f"[red]❌ Failed to read {toml_path.name}: {e}[/red]")
+        ok = False
+    return ok
+
+def validate_display(yml_path: Path):
+    required = ["resolution", "refresh_rate_hz"]
+    ok = True
+
+    try:
+        disp = yaml.safe_load(yml_path.read_text(encoding="utf-8"))
+        mon = disp.get("monitor", {})
+        table = Table(title="display-conf.yml")
+        table.add_column("Field", style="cyan")
+        table.add_column("Status", style="green")
+
+        for field in required:
+            if field in mon:
+                table.add_row(field, "✅")
+            else:
+                table.add_row(field, "[yellow]⚠ missing[/yellow]")
+                ok = False
+
+        print(table)
+    except Exception as e:
+        print(f"[red]❌ Failed to read {yml_path.name}: {e}[/red]")
+        ok = False
+    return ok
+
+def list_exports(name: str):
+    exports = EXPORTS_PATH / name
+    if exports.exists():
+        files = sorted(f.name for f in exports.glob("*.zip"))
+        if files:
+            print(Panel.fit("\n".join(files), title="📦 Exported ZIPs in EXPORTS/", style="dim"))
+        else:
+            print("[yellow]⚠ No ZIPs found in EXPORTS/[/yellow]")
+    else:
+        print("[dim]No export folder found for this experiment.[/dim]")
 
 @app.command("experiment")
 def validate_experiment(
-    path: Path = typer.Argument(..., help="Path to the experiment directory (inside LABORATORY)")
+    name: str = typer.Argument(..., help="Name of the experiment (without full path)")
 ):
     """
-    Validate structure, config and metadata of an experiment folder.
+    Validate an experiment by name, searching LABORATORY/ and ARCHIVE/, and show any exports in EXPORTS/
     """
-    print(Panel.fit(f"[bold cyan]🔍 Validating experiment at: {path}[/bold cyan]"))
+    base_path = None
+    for folder in [LAB_PATH, ARCHIVE_PATH]:
+        candidate = folder / name
+        if candidate.exists():
+            base_path = candidate
+            break
 
-    if not path.exists() or not path.is_dir():
-        print(f"[red]❌ Directory not found: {path}[/red]")
-        raise typer.Exit(code=1)
+    print(Panel.fit(f"🧪 Validating experiment: {name}", title="XTIM Validate"))
 
-    toml_file = path / "experiment.toml"
-    if not toml_file.exists():
-        print(f"[red]❌ experiment.toml not found in {path}[/red]")
-        raise typer.Exit(code=1)
+    if base_path is None:
+        print(f"[red]❌ Experiment '{name}' not found in LABORATORY/ or ARCHIVE/[/red]")
+        raise typer.Exit()
 
-    exp_data = load_toml_file(toml_file)
-    if exp_data is None:
-        raise typer.Exit(code=1)
+    config_path = base_path / "config"
+    toml_path = config_path / "experiment.toml"
+    yml_path = config_path / "display-conf.yml"
 
-    # Flatten keys for checking
-    def get_nested(d, keys):
-        for k in keys:
-            d = d.get(k, {})
-        return d if d else None
+    toml_ok = validate_toml(toml_path)
+    yml_ok = validate_display(yml_path)
 
-    table = Table(title="Field Check")
-    table.add_column("Field")
-    table.add_column("Present")
-    table.add_column("Value", overflow="fold")
+    list_exports(name)
 
-    for key_path in REQUIRED_TOML_KEYS:
-        keys = key_path.split(".")
-        val = get_nested(exp_data, keys)
-        ok = "[green]✔[/green]" if val is not None else "[red]✘[/red]"
-        val_str = str(val) if val else "[dim]None[/dim]"
-        table.add_row(key_path, ok, val_str)
-
-    print(table)
-
-    # Check folder structure
-    print("[bold]📁 Directory Check:[/bold]")
-    for folder in REQUIRED_PATHS:
-        dir_path = path / folder
-        if dir_path.exists() and dir_path.is_dir():
-            print(f"[green]✔[/green] {folder}/")
-        else:
-            print(f"[red]✘[/red] {folder}/ missing")
-
-    print("[bold green]✓ Validation complete.[/bold green]")
+    if toml_ok and yml_ok:
+        print(f"[green]✅ Experiment '{name}' is valid.[/green]")
+    else:
+        print(f"[yellow]⚠ Some issues found in experiment '{name}'.[/yellow]")

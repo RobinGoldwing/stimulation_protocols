@@ -1,75 +1,77 @@
 # cli/run.py
 
-# =============================================================================
-# XTIM – Experimental Toolkit for Multimodal Neuroscience
-# =============================================================================
-# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
-#
-# Developed by:
-#   - Arturo-José Valiño
-#   - Rubén Álvarez-Mosquera
-#
-# This software is designed to facilitate the creation, execution, and analysis
-# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
-# It integrates with hardware and software tools such as Pupil Labs, Emobit,
-# and MilliKey MH5, providing a unified command-line interface and interactive
-# menu system for experiment management.
-#
-# For more information about the XSCAPE project, please refer to the project's
-# documentation or contact the developers.
-# =============================================================================
-
 import typer
 from pathlib import Path
 import subprocess
 import sys
-import yaml
 
-app = typer.Typer(help="Execute experiment runs from a configured folder")
+app = typer.Typer(help="Execute official XTIM experiments")
 
-DEFAULT_SCRIPT_NAME = "experiment.py"
-DEFAULT_CONFIG_NAME = "config.yml"
+EXPERIMENT_SCRIPTS = {
+    "core-screen": "core-screen-stim.py",
+    "core-asset": "core-asset-stim.py",
+    "neo-screen": "neo-screen-stim.py",
+    "neo-asset": "neo-asset-stim.py"
+}
+
+EXPERIMENT_PATH = Path(__file__).parent.parent / "experiments"
+LAB_PATH = Path(__file__).parent.parent / "LABORATORY"
+ARCHIVE_PATH = Path(__file__).parent.parent / "ARCHIVE"
+
+def resolve_experiment_path(name: str) -> Path:
+    lab = LAB_PATH / name
+    arc = ARCHIVE_PATH / name
+
+    if lab.exists():
+        return lab
+    elif arc.exists():
+        typer.echo(f"[yellow]⚠ Experiment '{name}' is in ARCHIVE/. Please move it to LABORATORY/ to run.[/yellow]")
+        raise typer.Exit(code=1)
+    else:
+        typer.echo(f"[red]❌ Experiment '{name}' not found in LABORATORY or ARCHIVE.[/red]")
+        raise typer.Exit(code=1)
+
+@app.command("list")
+def list_experiments():
+    """
+    List available predefined XTIM experiments.
+    """
+    typer.echo("📦 Available experiments:")
+    for key in EXPERIMENT_SCRIPTS:
+        typer.echo(f"  - {key}")
 
 @app.command("start")
 def start(
-    experiment_path: Path = typer.Argument(..., help="Path to the experiment run directory"),
-    config_file: Path = typer.Option(None, "--config", "-c", help="Optional configuration file (default: config/config.yml)"),
-    interactive: bool = typer.Option(False, "--interactive", "-i", help="Run in interactive mode"),
+    name: str = typer.Argument(..., help="Name of the experiment to run (e.g. core-screen)"),
+    path: Path = typer.Option(None, "--path", "-p", help="Manual path to assets (e.g. c:/experiment)"),
+    exp: str = typer.Option(None, "--exp", "-e", help="Experiment name inside LABORATORY or ARCHIVE")
 ):
     """
-    Run an experiment from a given folder. Executes the default experiment script.
+    Start a predefined XTIM experiment.
     """
-    if not experiment_path.exists():
-        typer.echo(f"Experiment path not found: {experiment_path}")
-        raise typer.Exit(code=1)
+    if name not in EXPERIMENT_SCRIPTS:
+        typer.echo(f"[red]❌ Experiment '{name}' not found. Use 'xtim run list' to see available.[/red]")
+        raise typer.Exit()
 
-    script_path = experiment_path / "scripts" / DEFAULT_SCRIPT_NAME
-    if not script_path.exists():
-        typer.echo(f"Experiment script not found: {script_path}")
-        raise typer.Exit(code=1)
+    if path is None and exp is None:
+        typer.echo("[red]❌ You must provide either --path or --exp[/red]")
+        raise typer.Exit()
 
-    config_path = config_file or (experiment_path / "config" / DEFAULT_CONFIG_NAME)
-    if not config_path.exists():
-        typer.echo(f"Configuration file not found: {config_path}")
-        raise typer.Exit(code=1)
+    output_path = path if path else resolve_experiment_path(exp)
 
-    typer.echo(f"Loading configuration from {config_path}")
-    try:
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-    except Exception as e:
-        typer.echo(f"Error reading configuration: {e}")
-        raise typer.Exit(code=1)
+    script = EXPERIMENT_PATH / EXPERIMENT_SCRIPTS[name]
+    if not script.exists():
+        typer.echo(f"[red]❌ Script not found: {script}[/red]")
+        raise typer.Exit()
 
-    command = [sys.executable, str(script_path), "--config", str(config_path)]
+    command = [sys.executable, str(script), str(output_path)]
+    typer.echo(f"🚀 Launching experiment: [bold]{name}[/bold]")
+    typer.echo(f"📁 Output path: {output_path}")
+    typer.echo(f"▶ Command: {' '.join(command)}")
 
-    if interactive:
-        command.append("--interactive")
-
-    typer.echo(f"Executing experiment: {script_path}")
     try:
         subprocess.run(command, check=True)
-        typer.echo("Experiment run completed.")
+        typer.echo("[green]✅ Experiment completed.[/green]")
     except subprocess.CalledProcessError as e:
-        typer.echo(f"Experiment run failed: {e}")
+        typer.echo(f"[red]❌ Experiment failed: {e}[/red]")
         raise typer.Exit(code=1)

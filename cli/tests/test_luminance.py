@@ -1,4 +1,4 @@
-# cli/tests/luminance.py
+# cli/tests/test_luminance.py
 
 # =============================================================================
 # XTIM – Experimental Toolkit for Multimodal Neuroscience
@@ -19,56 +19,71 @@
 # documentation or contact the developers.
 # =============================================================================
 
+from psychopy import visual, core, event
 from pathlib import Path
-from psychopy import visual
 import yaml
+import pyglet
 
-CONFIG_PATH = Path(__file__).parent.parent.parent / "config" / "display-conf.yml"
+def choose_monitor_index():
+    try:
+        screens = pyglet.canvas.get_display().get_screens()
+        print("\nAvailable monitors:")
+        for idx, s in enumerate(screens):
+            print(f"  [{idx}] {s.width}x{s.height}")
+        choice = input("Select monitor index (default 0): ")
+        return int(choice) if choice.isdigit() and int(choice) < len(screens) else 0
+    except Exception as e:
+        print(f"[red]⚠ Could not detect monitors via pyglet: {e}[/red]")
+        return 0
 
-def load_display_config():
-    if not CONFIG_PATH.exists():
-        raise FileNotFoundError(f"Display configuration file not found: {CONFIG_PATH}")
-    with open(CONFIG_PATH, "r") as f:
-        return yaml.safe_load(f)
-
-def run():
+def run(experiment_path: Path):
     """
-    Load display and monitor parameters from config/display-conf.yml and run a luminance stability test.
-    The window flips continuously in a constant gray tone. Terminate manually (e.g., Alt+F4).
+    Run a luminance flicker test using the display-conf.yml of the experiment.
     """
-    config = load_display_config()
-    monitor_cfg = config.get("monitor", {})
-    display_cfg = config.get("display", {})
+    config_path = experiment_path / "config" / "display-conf.yml"
+    if not config_path.exists():
+        print(f"[red]❌ Configuration file not found: {config_path}[/red]")
+        return
 
-    resolution = monitor_cfg.get("resolution", [1024, 768])
-    screen = display_cfg.get("screen_index", 0)
-    distance = monitor_cfg.get("distance_cm", 60)
-    width = monitor_cfg.get("width_cm", 50)
-    hz = monitor_cfg.get("refresh_rate_hz", 60.0)
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
 
-    fullscreen = display_cfg.get("fullscreen", True)
-    use_gui = display_cfg.get("use_gui", False)
-    color = display_cfg.get("color_rgb255", [110, 110, 110])
-    color_space = display_cfg.get("color_space", "rgb255")
+    mon_cfg = config.get("monitor", {})
+    disp_cfg = config.get("display", {})
 
-    print(f"Launching luminance test with:")
+    resolution = mon_cfg.get("resolution", [1024, 768])
+    refresh = mon_cfg.get("refresh_rate_hz", 60.0)
+    fullscreen = disp_cfg.get("fullscreen", True)
+    use_gui = disp_cfg.get("use_gui", False)
+    bg = disp_cfg.get("color_rgb255", [127, 127, 127])
+    color_space = disp_cfg.get("color_space", "rgb255")
+
+    screen_index = choose_monitor_index()
+
+    print(f"[cyan]🧪 Running luminance test with:[/cyan]")
+    print(f"  Monitor index  : {screen_index}")
     print(f"  Resolution     : {resolution}")
-    print(f"  Refresh Rate   : {hz} Hz")
-    print(f"  Distance       : {distance} cm")
-    print(f"  Width          : {width} cm")
+    print(f"  Refresh Rate   : {refresh} Hz")
+    print(f"  Background RGB : {bg}")
     print(f"  Fullscreen     : {fullscreen}")
-    print(f"  Background RGB : {color}")
+    print(f"  Press any key or wait 5s to exit.")
 
     win = visual.Window(
         size=resolution,
-        screen=screen,
-        units="pix",
-        allowGUI=use_gui,
-        fullscr=fullscreen,
-        monitor=None,
-        color=tuple(color),
+        fullscr=True,
+        color=tuple(bg),
         colorSpace=color_space,
+        allowGUI=use_gui,
+        monitor="testMonitor",
+        units="pix",
+        screen=screen_index
     )
 
-    while True:
+    timer = core.CountdownTimer(5)
+    while timer.getTime() > 0:
         win.flip()
+        if event.getKeys():
+            break
+
+    win.close()
+    core.quit()

@@ -1,55 +1,62 @@
 #!/bin/bash
 
-# =============================================================================
+###############################################################################
 # XTIM – Installation Script for Linux/macOS
-# =============================================================================
-# This script verifies the presence of Conda and initializes the XTIM
-# experimental environment from ./config/conda-env/xtim-config-env.yml.
+###############################################################################
+# This script initializes the Conda environment for the XTIM system
+# and installs xtim in editable mode.
 #
-# Part of the XSCAPE Project
-# Developed by Arturo-José Valiño and Rubén Álvarez-Mosquera
-# =============================================================================
+# Part of the XSCAPE Project | INCIPIT-CSIC
+###############################################################################
 
 ENV_FILE="./config/conda-env/xtim-config-env.yml"
 ENV_NAME="xtim-env"
 
-echo "🔍 Checking system for Conda installation..."
-
-if ! command -v conda &> /dev/null
-then
-    echo " Conda not found on this system."
-    echo "Please install Miniconda from:"
-    echo " https://docs.conda.io/en/latest/miniconda.html"
+fail_exit() {
+    echo ""
+    echo "ERROR: $1"
     exit 1
+}
+
+echo ""
+echo "Checking system for Conda..."
+
+if ! command -v conda &> /dev/null; then
+    fail_exit "Conda not found. Please install Miniconda from https://docs.conda.io/"
 fi
 
-echo " Conda is available."
+echo "Conda is available."
 
-# Check if environment file exists
 if [ ! -f "$ENV_FILE" ]; then
-    echo " Environment file not found at $ENV_FILE"
-    echo "Please ensure the file exists and try again."
-    exit 1
+    fail_exit "Environment file not found at $ENV_FILE"
 fi
 
-echo " Creating Conda environment '$ENV_NAME' from $ENV_FILE..."
-conda env create -f "$ENV_FILE" || {
-    echo " Environment creation failed. Check Conda logs for details."
-    exit 1
-}
+echo ""
+echo "Creating environment '$ENV_NAME' from '$ENV_FILE'..."
+conda env create -f "$ENV_FILE"
+if [ $? -ne 0 ]; then
+    fail_exit "Environment creation failed. Try: conda env create -f $ENV_FILE"
+fi
 
-echo " Environment '$ENV_NAME' created successfully."
-echo " Installing xtim in editable mode..."
-pip install -e . || {
-    echo " Installation failed. Are you in the root of the xtim project?"
-    echo "Try to execute: pip install -e . "
-    exit 1
-}
-echo " xtim installed."
+echo "Environment '$ENV_NAME' created."
 
-echo
-echo " All done!"
-echo " To begin, activate the environment with:"
+
+echo ""
+echo "Installing xtim in editable mode..."
+pip install -e .
+if [ $? -ne 0 ]; then
+    fail_exit "pip install failed. Make sure you're in the root of the xtim project."
+fi
+
+echo "xtim installed."
+
+echo ""
+echo "Verifying installation..."
+xtim doctor status
+xtim --help
+
+echo ""
+echo "Installation complete and validated."
+echo ""
+echo "Please activate the environment manually:"
 echo "   conda activate $ENV_NAME"
-echo " If 'xtim' is not recognized as a command, try running:"
-echo "   python -m cli.main"

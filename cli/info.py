@@ -21,60 +21,100 @@
 
 import typer
 from pathlib import Path
+import toml
 import yaml
-from datetime import datetime
+from rich import print
+from rich.panel import Panel
+from rich.table import Table
 
-app = typer.Typer(help="Display metadata and summary information for an experiment folder")
+app = typer.Typer(help="Display metadata and summary information about a given experiment")
+
+LAB_PATH = Path(__file__).parent.parent / "LABORATORY"
+ARCHIVE_PATH = Path(__file__).parent.parent / "ARCHIVE"
+EXPORTS_PATH = Path(__file__).parent.parent / "EXPORTS"
+
+def load_toml(path: Path):
+    try:
+        return toml.load(path)
+    except Exception as e:
+        print(f"[red]❌ Failed to load TOML file: {e}[/red]")
+        return None
+
+def load_yaml(path: Path):
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[red]❌ Failed to load YAML file: {e}[/red]")
+        return None
+
+def print_dict_section(title, data):
+    t = Table(title=title)
+    t.add_column("Key", style="yellow")
+    t.add_column("Value", style="white")
+    for k, v in data.items():
+        t.add_row(k, str(v))
+    print(t)
 
 @app.command("experiment")
-def experiment_info(
-    experiment_path: Path = typer.Argument(..., help="Path to the experiment run directory"),
+def info_experiment(
+    name: str = typer.Argument(..., help="Name of the experiment")
 ):
     """
-    Show summary information about an experiment directory: subject, session date,
-    available data, logs, results, and configuration parameters.
+    Display information from experiment.toml, display-conf.yml, and any ZIPs in EXPORTS/
     """
-    if not experiment_path.exists() or not experiment_path.is_dir():
-        typer.echo(f"Experiment path does not exist or is not a directory: {experiment_path}")
-        raise typer.Exit(code=1)
+    found = None
+    for base in [LAB_PATH, ARCHIVE_PATH]:
+        if (base / name).exists():
+            found = base / name
+            break
 
-    typer.echo(f"Experiment directory: {experiment_path}")
+    print(Panel.fit(f"📊 Retrieving info: {name}", title="XTIM Info"))
 
-    # Subject metadata
-    subject_file = experiment_path / "subject_info.yml"
-    if subject_file.exists():
-        try:
-            subject_data = yaml.safe_load(subject_file.read_text())
-            typer.echo(f"Subject ID: {subject_data.get('id', 'N/A')}")
-            typer.echo(f"Age: {subject_data.get('age', 'N/A')}")
-            typer.echo(f"Condition: {subject_data.get('condition', 'N/A')}")
-        except Exception as e:
-            typer.echo(f"Failed to parse subject_info.yml: {e}")
+    if found is None:
+        print(f"[red]❌ Experiment '{name}' not found in LABORATORY or ARCHIVE[/red]")
     else:
-        typer.echo("No subject_info.yml file found.")
+        toml_path = found / "config" / "experiment.toml"
+        yml_path = found / "config" / "display-conf.yml"
 
-    # Check for experiment script
-    script_path = experiment_path / "scripts" / "experiment.py"
-    typer.echo(f"Experiment script: {'✔️' if script_path.exists() else 'Missing'}")
+        meta = load_toml(toml_path)
+        if meta:
+            panel = Panel.fit(f"[bold cyan]{meta['experiment'].get('name', name)}[/bold cyan]", title="Experiment")
+            print(panel)
+            
+            print(Panel.fit(f"📁 Experiment path: {found}", title="📁 Experiment path"))
 
-    # Check for config
-    config_path = experiment_path / "config" / "config.yml"
-    typer.echo(f"Configuration file: {'✔️' if config_path.exists() else 'Missing'}")
+            table = Table(title="Basic Metadata")
+            table.add_column("Key", style="green")
+            table.add_column("Value", style="white")
 
-    # Check for data
-    raw_data = experiment_path / "data" / "raw"
-    processed_data = experiment_path / "data" / "processed"
-    typer.echo(f"Raw data: {'✔️' if raw_data.exists() else 'Missing'}")
-    typer.echo(f"Processed data: {'✔️' if processed_data.exists() else 'Missing'}")
+            for key in ["description", "author", "email", "version", "created", "uuid"]:
+                val = meta["experiment"].get(key, "-")
+                table.add_row(key, str(val))
 
-    # Check for results
-    results = experiment_path / "results"
-    typer.echo(f"Results: {'✔️' if results.exists() else 'Missing'}")
+            print(table)
 
-    # Check for logs
-    log_path = experiment_path / "log"
-    typer.echo(f"Log files: {'✔️' if log_path.exists() else 'Missing'}")
+            print_dict_section("Hardware", meta.get("hardware", {}))
+            print_dict_section("Recording", meta.get("recording", {}))
+            print_dict_section("Paths", meta.get("paths", {}))
+            print_dict_section("Participant", meta.get("participant", {}))
+            print_dict_section("Tags", meta.get("tags", {}))
 
-    # Last modified time
-    last_modified = datetime.fromtimestamp(experiment_path.stat().st_mtime)
-    typer.echo(f"Last modified: {last_modified.strftime('%Y-%m-%d %H:%M:%S')}")
+        if yml_path.exists():
+            yml = load_yaml(yml_path)
+            print_dict_section("Monitor", yml.get("monitor", {}))
+            print_dict_section("Display", yml.get("display", {}))
+            print_dict_section("Sync", yml.get("sync", {}))
+        else:
+            print("[dim]No display-conf.yml found.[/dim]")
+
+    # Check EXPORTS
+    export_dir = EXPORTS_PATH / name
+    if export_dir.exists():
+        zips = sorted([f.name for f in export_dir.glob("*.zip")])
+        if zips:
+            print(Panel.fit(f"📂 Export path: {export_dir}", title="📦 Export Path"))
+            print(Panel.fit("\n".join(zips), title="📦 Exported ZIPs", style="dim"))
+        else:
+            print("[yellow]⚠ EXPORTS folder exists but has no ZIPs.[/yellow]")
+    else:
+        print("[dim]No EXPORTS folder found for this experiment.[/dim]")

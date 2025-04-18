@@ -1,0 +1,50 @@
+[experiment]
+name        = "{{ cookiecutter.experiment }}"
+description = "{{ cookiecutter.description }}"
+author      = "{{ cookiecutter.author_name }}"
+email       = "{{ cookiecutter.author_email }}"
+version     = "{{ cookiecutter.version }}"
+created     = "{{ cookiecutter.creation_date }}"
+uuid        = "{{ cookiecutter.experiment_id }}"
+research    = "{{ cookiecutter.research_area }}"
+paradigm    = "{{ cookiecutter.paradigm }}"
+
+[hardware]
+use_pupil_core = {{ 'true' if cookiecutter.use_pupil_core == 'yes' else 'false' }}
+use_pupil_neo  = {{ 'true' if cookiecutter.use_pupil_neo == 'yes' else 'false' }}
+use_emotibit   = {{ 'true' if cookiecutter.use_emotibit == 'yes' else 'false' }}
+use_eeg        = {{ 'true' if cookiecutter.use_eeg == 'yes' else 'false' }}
+use_millikey   = {{ 'true' if cookiecutter.use_millikey == 'yes' else 'false' }}
+use_lsl        = {{ 'true' if cookiecutter.use_lsl == 'yes' else 'false' }}
+
+[recording]
+sampling_rate_hz = {{ cookiecutter.sampling_rate }}
+duration_minutes = {{ cookiecutter.duration_minutes }}
+segments         = {{ cookiecutter.segments }}
+calibration      = {{ 'true' if cookiecutter.calibration == 'yes' else 'false' }}
+
+[display]
+monitor_resolution = [{{ cookiecutter.resolution_x }}, {{ cookiecutter.resolution_y }}]
+monitor_distance_cm = {{ cookiecutter.monitor_distance_cm }}
+monitor_width_cm = {{ cookiecutter.monitor_width_cm }}
+refresh_rate_hz = {{ cookiecutter.monitor_refresh_hz }}
+fullscreen = {{ 'true' if cookiecutter.fullscreen == 'true' else 'false' }}
+screen_index = {{ cookiecutter.screen_index }}
+use_gui = {{ 'true' if cookiecutter.use_gui == 'true' else 'false' }}
+color_space = "{{ cookiecutter.color_space }}"
+flip_interval_override = {{ cookiecutter.flip_interval_override }}
+
+[paths]
+data_dir    = "data/"
+log_dir     = "log/"
+scripts_dir = "scripts/"
+config_dir  = "config/"
+output_dir  = "objects-output/"
+
+[participant]
+type     = "{{ cookiecutter.participant_type }}"
+language = "{{ cookiecutter.language }}"
+
+[tags]
+modality = ["eye-tracking", "physiology", "motor"]
+devices  = ["pupil-core", "pupil-neo", "emotibit", "eeg", "millikey"]

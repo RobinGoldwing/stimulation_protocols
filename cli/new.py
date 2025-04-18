@@ -10,7 +10,7 @@ from datetime import datetime
 
 def register_experiment_in_index(name: str, template_name: str, output_path: Path):
     index_path = LABORATORY_DIR / "index.yml"
-    toml_file = output_path / "experiment.toml"
+    toml_file = output_path / "config" / "experiment.toml"
 
     entry = {
         "name": name,
@@ -77,6 +77,8 @@ def experiment(
     selected_template = templates[template]
     output_path = LABORATORY_DIR / name
 
+    LABORATORY_DIR.mkdir(parents=True, exist_ok=True)
+    
     typer.echo(f"📁 Creating experiment '{name}' in {output_path}")
     try:
         cookiecutter(

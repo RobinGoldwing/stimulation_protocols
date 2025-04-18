@@ -1,0 +1,50 @@
+[experiment]
+name        = "demo000"
+description = "Short description of the experiment"
+author      = "Your Name"
+email       = "you@example.com"
+version     = "0.1.0"
+created = "2025-04-18T07:20:32"
+uuid = "adfebc1c-d301-4cf7-85e0-7dd3dff2bdf6"
+research    = "attention"
+paradigm    = "fixation"
+
+[hardware]
+use_pupil_core = true
+use_pupil_neo  = false
+use_emotibit   = false
+use_eeg        = false
+use_millikey   = false
+use_lsl        = true
+
+[recording]
+sampling_rate_hz = 60
+duration_minutes = 5
+segments         = 1
+calibration      = true
+
+[display]
+monitor_resolution = [1024, 768]
+monitor_distance_cm = 60
+monitor_width_cm = 50
+refresh_rate_hz = 60.01
+fullscreen = true
+screen_index = 0
+use_gui = true
+color_space = "rgb255"
+flip_interval_override = 0.0
+
+[paths]
+data_dir    = "data/"
+log_dir     = "log/"
+scripts_dir = "scripts/"
+config_dir  = "config/"
+output_dir  = "objects-output/"
+
+[participant]
+type     = "human-adult"
+language = "es"
+
+[tags]
+modality = ["eye-tracking", "physiology", "motor"]
+devices  = ["pupil-core", "pupil-neo", "emotibit", "eeg", "millikey"]

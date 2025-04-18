@@ -28,6 +28,11 @@ def lazy_menu(): from cli import menu; return menu.app
 def lazy_info(): from cli import info; return info.app
 def lazy_doctor(): from cli import doctor; return doctor.app
 def lazy_validate(): from cli import validate; return validate.app
+def lazy_delete(): from cli import delete; return delete.app
+def lazy_export(): from cli import export; return export.app
+def lazy_archive(): from cli import archive; return archive.app
+def lazy_test(): from cli import test; return test.app
+
 
 # Register subcommands using lazy loaders
 app.add_typer(lazy_new(), name="new", help="Create new experiments from standardized templates (Cookiecutter)")
@@ -39,6 +44,10 @@ app.add_typer(lazy_menu(), name="menu", help="Launch the interactive XTIM termin
 app.add_typer(lazy_info(), name="info", help="View and summarize experiment metadata and settings")
 app.add_typer(lazy_doctor(), name="doctor", help="Run diagnostic checks for XTIM environment")
 app.add_typer(lazy_validate(), name="validate", help="Validate experiment structure and metadata")
+app.add_typer(lazy_delete(), name="delete", help="Delete experiments from LABORATORY")
+app.add_typer(lazy_export(), name="export", help="Export experiments as compressed archives")
+app.add_typer(lazy_archive(), name="archive", help="Archive experiments into the ARCHIVE folder")
+app.add_typer(lazy_test(), name="test", help="Run integrated system tests")
 
 if __name__ == "__main__":
     app()

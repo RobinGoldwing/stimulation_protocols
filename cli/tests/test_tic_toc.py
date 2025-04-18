@@ -1,4 +1,4 @@
-# cli/tests/tic_toc.py
+# cli/tests/test_tic_toc.py
 
 # =============================================================================
 # XTIM – Experimental Toolkit for Multimodal Neuroscience
@@ -19,18 +19,37 @@
 # documentation or contact the developers.
 # =============================================================================
 
-import sys
-import os
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if base_path not in sys.path:
-    sys.path.insert(0, base_path)
 
-from experiments import commons as cm
-
+from rich import print
 import time
 
-
 def run():
-    cm.tic()
-    time.sleep(5)
-    cm.toc()
+    print("\n[bold cyan]XTIM — Tic-Toc Timing Precision Test[/bold cyan]")
+    print("[dim]This test measures the elapsed time between 'tic' and 'toc' calls.[/dim]\n")
+
+    durations = []
+    rounds = 3
+    delay_sec = 5
+
+    for i in range(rounds):
+        print(f"⏱️  Round {i+1} — sleeping for {delay_sec} seconds...")
+        start = time.perf_counter()
+        time.sleep(delay_sec)
+        end = time.perf_counter()
+        elapsed = end - start
+        durations.append(elapsed)
+        print(f"✅  Elapsed time: {elapsed:.6f} seconds\n")
+
+    mean_time = sum(durations) / len(durations)
+    deviation = (sum((x - mean_time) ** 2 for x in durations) / len(durations)) ** 0.5
+
+    print("[bold green]📊 Timing Summary:[/bold green]")
+    print(f"  🔁 Rounds        : {rounds}")
+    print(f"  ⏱️  Target delay  : {delay_sec:.2f} s")
+    print(f"  📈 Mean elapsed  : {mean_time:.6f} s")
+    print(f"  📉 Std deviation : {deviation:.6f} s")
+
+    if deviation > 0.01:
+        print("[yellow]⚠️  System timing may be unstable. Consider closing background apps.[/yellow]")
+    else:
+        print("[green]🟢 Timing appears stable.[/green]")

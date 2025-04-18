@@ -1,0 +1,18 @@
+monitor:
+  resolution: [{{ cookiecutter.resolution_x }}, {{ cookiecutter.resolution_y }}]
+  distance_cm: {{ cookiecutter.monitor_distance_cm }}
+  width_cm: {{ cookiecutter.monitor_width_cm }}
+  refresh_rate_hz: {{ cookiecutter.monitor_refresh_hz }}
+
+display:
+  color_rgb255: [{{ cookiecutter.bg_r }}, {{ cookiecutter.bg_g }}, {{ cookiecutter.bg_b }}]
+  fullscreen: {{ cookiecutter.fullscreen }}
+  screen_index: {{ cookiecutter.screen_index }}
+  use_gui: {{ cookiecutter.use_gui }}
+  color_space: "{{ cookiecutter.color_space }}"
+  flip_interval_override: {{ cookiecutter.flip_interval_override }}
+
+sync:
+  method: "{{ cookiecutter.sync_method }}"
+  ttl_port: "{{ cookiecutter.ttl_port }}"
+  lsl_stream_name: "{{ cookiecutter.lsl_stream_name }}"

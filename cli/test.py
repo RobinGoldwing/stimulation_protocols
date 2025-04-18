@@ -1,57 +1,58 @@
 # cli/test.py
 
-# =============================================================================
-# XTIM – Experimental Toolkit for Multimodal Neuroscience
-# =============================================================================
-# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
-#
-# Developed by:
-#   - Arturo-José Valiño
-#   - Rubén Álvarez-Mosquera
-#
-# This software is designed to facilitate the creation, execution, and analysis
-# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
-# It integrates with hardware and software tools such as Pupil Labs, Emobit,
-# and MilliKey MH5, providing a unified command-line interface and interactive
-# menu system for experiment management.
-#
-# For more information about the XSCAPE project, please refer to the project's
-# documentation or contact the developers.
-# =============================================================================
-
 import typer
-from .tests import test_frame_rate as frame_rate
-from .tests import test_luminance as luminance
-from .tests import test_tic_toc as tic_toc
-from .tests import test_fpd as fpd
+from pathlib import Path
+from rich import print
 
+app = typer.Typer(help="Run diagnostic or visual tests")
 
-app = typer.Typer(help="Run diagnostic or calibration tests")
+LAB_PATH = Path(__file__).parent.parent / "LABORATORY"
+ARCHIVE_PATH = Path(__file__).parent.parent / "ARCHIVE"
+EXPORTS_PATH = Path(__file__).parent.parent / "EXPORTS"
 
-@app.command("frame-rate")
-def test_frame_rate():
-    """
-    Measure actual frame rate of the display.
-    """
-    frame_rate.run()
+def resolve_experiment_path(name: str) -> Path:
+    for base in [LAB_PATH, ARCHIVE_PATH]:
+        path = base / name
+        if path.exists():
+            return path
+    if (EXPORTS_PATH / name).exists():
+        print(f"[red]❌ Cannot run test on '{name}' because it is archived as ZIP in EXPORTS/.[/red]")
+        print(f"[dim]🛈 Please extract it manually to LABORATORY/ or ARCHIVE/ to test visual features.[/dim]")
+    else:
+        print(f"[red]❌ Experiment '{name}' not found in LABORATORY or ARCHIVE[/red]")
+    raise typer.Exit()
 
 @app.command("luminance")
-def test_luminance():
+def test_luminance(name: str = typer.Argument(..., help="Experiment name (LABORATORY or ARCHIVE)")):
     """
-    Launch a luminance uniformity or flicker test.
+    Run luminance test using display-conf.yml from experiment.
     """
-    luminance.run()
+    from cli.tests import test_luminance as luminance
+    exp_path = resolve_experiment_path(name)
+    luminance.run(exp_path)
+
+@app.command("frame-rate")
+def test_framerate():
+    """
+    Measure the actual frame rate of the selected monitor.
+    """
+    from cli.tests import test_frame_rate as fr
+    fr.run()
 
 @app.command("tic-toc")
 def test_tic_toc():
     """
-    Test time measurement accuracy using tic() / toc().
+    Basic timer check: prints elapsed time over 5 seconds.
     """
-    tic_toc.run()
+    from cli.tests import test_tic_toc as fr
+    fr.run()
 
 @app.command("fpd")
-def test_fpd():
+def test_fpd(
+    file: Path = typer.Option(None, "--file", "-f", help="Optional path to pupil_positions.csv")
+):
     """
-    Plot frame duration distribution from pupil_positions.csv.
+    Run FPD analysis on a global or specified CSV file.
     """
-    fpd.run()
+    from cli.tests import test_fpd as fpd
+    fpd.run(file)

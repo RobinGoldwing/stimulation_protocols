@@ -22,62 +22,118 @@
 import typer
 import yaml
 from pathlib import Path
-from typing import Optional
+from rich import print
+from rich.table import Table
+from rich.panel import Panel
+import toml
 
-app = typer.Typer(help="Manage XTIM configuration settings")
+app = typer.Typer(help="View or modify global XTIM configuration")
 
-CONFIG_PATH = Path.home() / ".xtimrc.yml"
+DEFAULT_CONFIG = Path(__file__).parent.parent / "config" / "xtim-config.yml"
+LAB_PATH = Path(__file__).parent.parent / "LABORATORY"
+ARCHIVE_PATH = Path(__file__).parent.parent / "ARCHIVE"
 
-DEFAULT_CONFIG = {
-    "default_template": "screen-stimulus",
-    "recording_path": str(Path.home() / "xtim_recordings"),
-    "default_export_format": "csv",
-    "pupil_api": {
-        "ip": "127.0.0.1",
-        "port": 50020
-    }
-}
+def load_config(path: Path):
+    if not path.exists():
+        print(f"[yellow]⚠ Config file not found at {path}[/yellow]")
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
 
-def load_config() -> dict:
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "r") as f:
-            return yaml.safe_load(f)
-    return DEFAULT_CONFIG.copy()
-
-def save_config(config: dict):
-    with open(CONFIG_PATH, "w") as f:
-        yaml.dump(config, f)
+def save_config(path: Path, data: dict):
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f, sort_keys=False)
+    print(f"[green]✅ Config saved to {path}[/green]")
 
 @app.command("show")
-def show():
+def show_config(config: Path = typer.Option(DEFAULT_CONFIG, "--config", "-c", help="Path to config file")):
     """
-    Display current XTIM configuration.
+    Show the current global configuration.
     """
-    config = load_config()
-    typer.echo("XTIM configuration:")
-    typer.echo(yaml.dump(config, sort_keys=False))
+    data = load_config(config)
+    if not data:
+        print("[red]❌ No configuration found.[/red]")
+        return
+    table = Table(title=f"XTIM Config: {config}")
+    table.add_column("Key", style="cyan")
+    table.add_column("Value", style="white")
+    for k, v in data.items():
+        table.add_row(k, str(v))
+    print(table)
 
-@app.command("set")
-def set_key(
-    key: str = typer.Argument(..., help="Configuration key to set (e.g. pupil_api.ip)"),
-    value: str = typer.Argument(..., help="New value for the configuration key"),
+@app.command("get")
+def get_value(
+    key: str = typer.Argument(..., help="Key to retrieve"),
+    config: Path = typer.Option(DEFAULT_CONFIG, "--config", "-c", help="Path to config file")
 ):
     """
-    Set a configuration value (nested keys supported via dot notation).
+    Get a specific config value by key.
     """
-    config = load_config()
-    parts = key.split(".")
-    ref = config
-    for part in parts[:-1]:
-        ref = ref.setdefault(part, {})
-    ref[parts[-1]] = value
-    save_config(config)
-    typer.echo(f"Updated: {key} = {value}")
+    data = load_config(config)
+    value = data.get(key)
+    if value is not None:
+        print(f"[bold]{key}[/bold] = {value}")
+    else:
+        print(f"[yellow]⚠ Key '{key}' not found in config.[/yellow]")
 
-@app.command("reset")
-def reset():
+@app.command("set")
+def set_value(
+    key: str = typer.Argument(..., help="Key to set"),
+    value: str = typer.Argument(..., help="Value to assign"),
+    config: Path = typer.Option(DEFAULT_CONFIG, "--config", "-c", help="Path to config file")
+):
     """
-    Reset the configuration file to default values.
+    Set a value in the config.
     """
-    save_config(DEFAULT_CONFIG.copy())
-    typer.echo("Configuration has been reset to default values.")
+    data = load_config(config)
+    data[key] = value
+    save_config(config, data)
+
+@app.command("export")
+def export_config(
+    out: Path = typer.Option(..., help="Destination path for the exported config"),
+    config: Path = typer.Option(DEFAULT_CONFIG, "--config", "-c", help="Path to config file")
+):
+    """
+    Export the current configuration to a different file.
+    """
+    data = load_config(config)
+    if not data:
+        print("[red]❌ Nothing to export.[/red]")
+        return
+    save_config(out, data)
+
+@app.command("show-experiment")
+def show_experiment(
+    name: str = typer.Argument(..., help="Name of the experiment to show")
+):
+    """
+    Show the content of experiment.toml if found in LABORATORY or ARCHIVE.
+    """
+    for base in [LAB_PATH, ARCHIVE_PATH]:
+        candidate = base / name / "config" / "experiment.toml"
+        if candidate.exists():
+            try:
+                meta = toml.load(candidate)
+                panel = Panel.fit(f"[bold cyan]Experiment: {meta['experiment'].get('name', name)}[/bold cyan]", style="green")
+                print(panel)
+
+                print(Panel.fit(f"📁 Path: {candidate}", title="📁 Experiment path"))
+
+
+                table = Table(title="experiment.toml")
+                table.add_column("Key", style="cyan")
+                table.add_column("Value", style="white")
+
+                for section in ["experiment", "hardware", "recording", "paths", "participant", "tags"]:
+                    data = meta.get(section, {})
+                    for k, v in data.items():
+                        table.add_row(f"{section}.{k}", str(v))
+
+                print(table)
+                return
+            except Exception as e:
+                print(f"[red]❌ Failed to parse {candidate}: {e}[/red]")
+                return
+
+    print(f"[red]❌ Experiment '{name}' not found in LABORATORY or ARCHIVE[/red]")
