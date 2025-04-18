@@ -20,7 +20,11 @@
 # =============================================================================
 
 import typer
-from cli.tests import frame_rate, luminance, tic_toc, fpd
+from .tests import test_frame_rate as frame_rate
+from .tests import test_luminance as luminance
+from .tests import test_tic_toc as tic_toc
+from .tests import test_fpd as fpd
+
 
 app = typer.Typer(help="Run diagnostic or calibration tests")
 

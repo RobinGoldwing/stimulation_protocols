@@ -1,0 +1,26 @@
+# CLI core
+typer>=0.9.0
+rich>=13.0.0
+questionary
+
+# Template system
+cookiecutter>=2.5.0
+pyyaml
+toml
+
+# Scientific stack
+numpy
+pandas
+matplotlib
+scipy
+pylsl
+psychopy
+
+# Devices and signals
+keyboard
+msgpack
+requests
+pyplr
+
+# Internal tools (if needed)
+setuptools

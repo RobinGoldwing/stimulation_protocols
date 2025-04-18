@@ -1,36 +1,44 @@
+
 # cli/main.py
 
-# =============================================================================
-# XTIM – Experimental Toolkit for Multimodal Neuroscience
-# =============================================================================
-# Part of the XSCAPE Project (Experimental Science for Cognitive and Perceptual Exploration)
-#
-# Developed by:
-#   - Arturo-José Valiño
-#   - Rubén Álvarez-Mosquera
-#
-# This software is designed to facilitate the creation, execution, and analysis
-# of neuroscience experiments involving eye-tracking, EEG, and other modalities.
-# It integrates with hardware and software tools such as Pupil Labs, Emobit,
-# and MilliKey MH5, providing a unified command-line interface and interactive
-# menu system for experiment management.
-#
-# For more information about the XSCAPE project, please refer to the project's
-# documentation or contact the developers.
-# =============================================================================
-
 import typer
-from cli import new, run, devices, export, config, menu, info
 
-app = typer.Typer(help="XTIM: CLI for experimental neuroscience workflows")
+app = typer.Typer(
+    help="XTIM: CLI for Experimental Neuroscience Workflows",
+    epilog="""
+Developed as part of the XSCAPE Project (INCIPIT/CSIC).
+Designed to manage, execute and document multimodal cognitive science experiments
+involving eye-tracking, physiological sensors, and real-time data streams.
 
-app.add_typer(new.app, name="new", help="Create new experiments from templates")
-app.add_typer(run.app, name="run", help="Execute experiment runs")
-app.add_typer(devices.app, name="devices", help="Manage hardware interfaces")
-app.add_typer(export.app, name="export", help="Export experiment outputs")
-app.add_typer(config.app, name="config", help="Edit or inspect system configuration")
-app.add_typer(menu.app, name="menu", help="Launch the interactive XTIM menu")
-app.add_typer(info.app, name="info", help="View metadata for experiments")
+For more info, visit: https://www.xscapeuos.com/
+
+Author Contact:  
+
+Arturo-Jose Valiño (Lead) : arturo-jose.valino@incipit.csic.es
+    """
+)
+
+# Define lazy loading functions for each command group
+def lazy_new(): from cli import new; return new.app
+def lazy_run(): from cli import run; return run.app
+def lazy_devices(): from cli import devices; return devices.app
+def lazy_export(): from cli import export; return export.app
+def lazy_config(): from cli import config; return config.app
+def lazy_menu(): from cli import menu; return menu.app
+def lazy_info(): from cli import info; return info.app
+def lazy_doctor(): from cli import doctor; return doctor.app
+def lazy_validate(): from cli import validate; return validate.app
+
+# Register subcommands using lazy loaders
+app.add_typer(lazy_new(), name="new", help="Create new experiments from standardized templates (Cookiecutter)")
+app.add_typer(lazy_run(), name="run", help="Execute experimental sessions with real-time synchronization")
+app.add_typer(lazy_devices(), name="devices", help="Configure and list available hardware interfaces")
+app.add_typer(lazy_export(), name="export", help="Export experimental data and metadata for analysis or archiving")
+app.add_typer(lazy_config(), name="config", help="Edit or inspect system-wide experimental configuration")
+app.add_typer(lazy_menu(), name="menu", help="Launch the interactive XTIM terminal menu")
+app.add_typer(lazy_info(), name="info", help="View and summarize experiment metadata and settings")
+app.add_typer(lazy_doctor(), name="doctor", help="Run diagnostic checks for XTIM environment")
+app.add_typer(lazy_validate(), name="validate", help="Validate experiment structure and metadata")
 
 if __name__ == "__main__":
     app()

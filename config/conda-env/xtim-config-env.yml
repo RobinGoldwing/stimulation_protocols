@@ -1,4 +1,4 @@
-name: pupil_labs
+name: xtim-env
 channels:
   - defaults
 dependencies:
@@ -23,6 +23,7 @@ dependencies:
       - colorama==0.4.6
       - contourpy==1.1.0
       - cryptography==41.0.1
+      - cookiecutter==2.5.0
       - cycler==0.11.0
       - cython==0.29.36
       - decorator==4.4.2
@@ -84,9 +85,11 @@ dependencies:
       - pywinhook==1.6.2
       - pyyaml==6.0
       - pyzmq==25.1.0
+      - questionary
       - questplus==2023.1
       - requests==2.31.0
       - requests-toolbelt==1.0.0
+      - rich
       - scipy==1.10.1
       - seaborn==0.12.2
       - seabreeze==2.4.0
@@ -96,7 +99,9 @@ dependencies:
       - soupsieve==2.4.1
       - tables==3.8.0
       - tobii-research==1.10.1
+      - toml
       - tqdm==4.65.0
+      - typer==0.15.2
       - tzdata==2023.3
       - ujson==5.8.0
       - urllib3==2.0.3
@@ -107,4 +112,4 @@ dependencies:
       - zipp==3.15.0
       - zope-event==5.0
       - zope-interface==6.0
-prefix: C:\Users\arturoV\Anaconda3\envs\stim_emotibit
+      

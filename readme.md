@@ -1,7 +1,7 @@
 
 # xtim – Experimental Framework for Multimodal Neurocognitive Research
 
-**xtim** is used for presenting stimuli of the [XSCAPE Project](https://xscape.csic.es) at CSIC-INCIPIT.  
+**xtim** is used for presenting stimuli of the [XSCAPE Project](https://www.incipit.csic.es/en/project/xscape) at CSIC-INCIPIT.  
 It is designed to support **human cognition research** across eye-tracking, physiology, behavior and brain activity.
 
 📚 For literature and references on the XSCAPE framework, see:

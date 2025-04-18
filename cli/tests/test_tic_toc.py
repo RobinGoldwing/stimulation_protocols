@@ -19,8 +19,16 @@
 # documentation or contact the developers.
 # =============================================================================
 
+import sys
+import os
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if base_path not in sys.path:
+    sys.path.insert(0, base_path)
+
+from experiments import commons as cm
+
 import time
-import commons as cm
+
 
 def run():
     cm.tic()

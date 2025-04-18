@@ -3,8 +3,10 @@
   "author_name": "Your Name",
   "description": "Short description of the experiment",
   "version": "0.1.0",
-  "use_emotibit": "no",
-  "use_pupil_labs": "yes",
+  "research_area": ["attention", "memory"],
+  "device_setup": ["pupil_core", "emotibit"],
   "sampling_rate": "60",
-  "duration_minutes": "5"
+  "duration_minutes": "5",
+  "ethics_code": "EXP-2024-013",
+  "participant_type": "human-adult"
 }

@@ -28,7 +28,7 @@ setup(
     packages=find_packages(),  # Encuentra todos los submódulos automáticamente
     include_package_data=True,
     install_requires=[
-        "typer[all]",
+        "typer",
         "cookiecutter",
         "pyyaml",
         "pylsl",
