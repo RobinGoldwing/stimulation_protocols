@@ -72,3 +72,13 @@ runs/
 __results__/
 __data__/
 __models__/
+EXPORTS/
+ARCHIVE/
+LABORATORY/
+
+# _legacy/
+
+
+_logs/
+logs/
+*.log
