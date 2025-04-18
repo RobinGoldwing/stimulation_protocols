@@ -1,18 +1,9 @@
-# OLD Gitignore file
-/__pycache__
-emotibit_data/*.csv
-emotibit_data/*.json
-emotibit_data/LSL_recording_timestamps/06032023/expOO1/*.xdf
-emotibit_data/LSL_recording_timestamps/*.xdf
-/emotibit_data/LSL_recording_timestamps/06032023/exp001/
-/emotibit_data
-/pupil_labs_data
-/OBJECTS_not_used
-/OBJECTS_all/
-# /OBJECTS/
-
 # .Gitignore
 # .gitattributes
+
+# OLD Gitignore file
+/__pycache__
+/OBJECTS/
 
 # Archivos de Datos
 *.xdf
@@ -79,8 +70,7 @@ EXPORTS/
 ARCHIVE/
 LABORATORY/
 
-# _legacy/
-
+_legacy/
 
 _logs/
 logs/

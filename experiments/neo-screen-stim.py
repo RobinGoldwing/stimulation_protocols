@@ -38,7 +38,9 @@ config = {
     "stim_time": 1.0,
     "blank_time": 0.4,
     "drift_time": 1.0,
-    "text_size": 40
+    "text_size": 40,
+    "welcome_duration": 3.0,
+    "goodbye_duration": 3.0
 }
 
 obj_dir = target / "OBJECTS"
@@ -81,12 +83,33 @@ drift_dot = visual.Circle(win, radius=10, fillColor="black", lineColor="black")
 stim = visual.ImageStim(win)
 
 # ─────────────────────────────────────────────
-# Start protocol
+# Load welcome and goodbye images
 # ─────────────────────────────────────────────
 
-text.draw()
-win.flip()
+script_img_dir = target / "script-images"
+welcome_img_path = next(script_img_dir.glob("welcome.*"), None)
+goodbye_img_path = next(script_img_dir.glob("goodbye.*"), None)
+
+welcome_image = visual.ImageStim(win, image=str(welcome_img_path)) if welcome_img_path else None
+goodbye_image = visual.ImageStim(win, image=str(goodbye_img_path)) if goodbye_img_path else None
+
+# ─────────────────────────────────────────────
+# Show welcome screen or wait for key
+# ─────────────────────────────────────────────
+
+if welcome_image:
+    for _ in range(int(config["welcome_duration"] * 60)):
+        welcome_image.draw()
+        win.flip()
+else:
+    text.draw()
+    win.flip()
+
 event.waitKeys()
+
+# ─────────────────────────────────────────────
+# Start stimulation session
+# ─────────────────────────────────────────────
 
 drift_dot.draw()
 win.flip()
@@ -120,17 +143,28 @@ for i, img in enumerate(stimuli):
     win.flip()
     core.wait(config["blank_time"])
 
+# ─────────────────────────────────────────────
+# End of experiment and goodbye screen
+# ─────────────────────────────────────────────
+
 lsl_out.push_sample(["END"])
 device.send_event("END")
 core.wait(1.0)
 
 duration = cm.toc("stim_loop")
-
 recording_id = device.recording_stop_and_save()
-print(f"🛑 Recording saved. ID: {recording_id}")
 
+# Save order and duration
 cm.save_list_to_txt(order, order_file)
 print(f"📝 Order saved to {order_file}")
 print(f"✅ Duration: {duration:.2f} seconds")
+print(f"🛑 Recording saved. ID: {recording_id}")
+
+# Show goodbye image if available
+if goodbye_image:
+    for _ in range(int(config["goodbye_duration"] * 60)):
+        goodbye_image.draw()
+        win.flip()
+
 win.close()
 core.quit()
