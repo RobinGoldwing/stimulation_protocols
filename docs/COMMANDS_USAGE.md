@@ -66,5 +66,85 @@ xtim test tic-toc
 ```bash
 xtim menu
 ```
+---
+
+
+# 🔧 Optional Flags & Parameters (examples, may vary by command)
+  --mode [screen|asset]
+  --experiment NAME
+  --config PATH
+  --simulate
+  --device [pupil|emobit|millikey]
+  --format [zip|folder]
+  --fps
+  --luminance
+  --list
+  --test
+  --output PATH
 
 ---
+# 📚 XTIM CLI – Full Command Syntax Reference
+
+## xtim __init__
+xtim __init__ [OPTIONS]
+
+## xtim _run
+xtim _run list_experiments(...)
+xtim _run start(...)
+
+## xtim archive
+xtim archive archive_experiment(...)
+
+## xtim assets
+xtim assets generate_assets(...)
+xtim assets shuffle_assets(...)
+xtim assets import_assets(...)
+
+## xtim config
+xtim config show_config(...)
+xtim config get_value(...)
+xtim config set_value(...)
+xtim config export_config(...)
+xtim config show_experiment(...)
+
+## xtim delete
+xtim delete delete_experiment(...)
+
+## xtim devices
+xtim devices list_streams(...)
+
+## xtim doctor
+xtim doctor status(...)
+
+## xtim export
+xtim export export_experiment(...)
+
+## xtim info
+xtim info info_experiment(...)
+
+## xtim main
+xtim main [OPTIONS]
+
+## xtim menu
+xtim menu start(...)
+
+## xtim new
+xtim new experiment(...)
+xtim new list_templates(...)
+
+## xtim run
+xtim run list_experiments(...)
+xtim run check_environment(...)
+xtim run start(...)
+
+## xtim test
+xtim test luminance(...)
+xtim test frame-rate(...)
+xtim test tic_toc(...)
+xtim test fpd(...)
+
+## xtim utils
+xtim utils [OPTIONS]
+
+## xtim validate
+xtim validate validate_experiment(...)
