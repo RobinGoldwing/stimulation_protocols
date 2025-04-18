@@ -1,9 +1,8 @@
+# OLD Gitignore file
+# /OBJECTS/
+
 # .Gitignore
 # .gitattributes
-
-# OLD Gitignore file
-/__pycache__
-/OBJECTS/
 
 # Archivos de Datos
 *.xdf
@@ -15,6 +14,7 @@ env/
 venv/
 
 # Python bytecode
+/__pycache__
 __pycache__/
 *.py[cod]
 *$py.class
@@ -63,9 +63,9 @@ runs/
 *.key
 
 # Carpetas típicas de proyectos científicos
-__results__/
-__data__/
-__models__/
+# __results__/
+# __data__/
+# __models__/
 EXPORTS/
 ARCHIVE/
 LABORATORY/

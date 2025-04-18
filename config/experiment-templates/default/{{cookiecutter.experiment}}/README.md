@@ -80,13 +80,17 @@ Template: `default/`
 
 ## 📁 Folder Structure
 
-- `data/`: Raw experiment data  
+- `__data__/`: Raw experiment data  
+- `__models__/`: Models  
+- `__notebooks__/`: Jupyter Notebooks  
+- `__results__/`: Results data  
+- `__output__/`: Processed or derived outputs  
 - `log/`: Execution and debug logs  
 - `scripts/`: Stimulus control scripts  
 - `config/`: All configuration files (TOML, YAML)  
-- `objects-output/`: Processed or derived outputs  
 
 ---
+
 
 # 🧾 Notes
 

@@ -35,11 +35,14 @@ color_space = "{{ cookiecutter.color_space }}"
 flip_interval_override = {{ cookiecutter.flip_interval_override }}
 
 [paths]
-data_dir    = "data/"
+data_dir    = "__data__/"
+results_dir    = "__results__/"
+models_dir    = "__models__/"
+notebooks_dir    = "__notebooks__/"
+output_dir  = "__output__/"
 log_dir     = "log/"
 scripts_dir = "scripts/"
 config_dir  = "config/"
-output_dir  = "objects-output/"
 
 [participant]
 type     = "{{ cookiecutter.participant_type }}"

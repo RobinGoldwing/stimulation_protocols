@@ -49,8 +49,8 @@ config = {
 }
 
 obj_dir = target / "OBJECTS"
-order_file = target / "objects-output" / "order.txt"
-screenshot_dir = target / "objects-output"
+order_file = target / "__output__" / "order.txt"
+screenshot_dir = target / "__output__"
 config_path = target / "config" / "display-conf.yml"
 
 # Choose stimuli source

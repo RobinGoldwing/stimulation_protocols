@@ -49,7 +49,7 @@ stimuli = stimuli * config["n_repeats"]
 if config["shuffle"]:
     np.random.shuffle(stimuli)
 
-output_dir = target / "objects-output"
+output_dir = target / "__output__"
 output_dir.mkdir(parents=True, exist_ok=True)
 order_file = output_dir / "order.txt"
 
